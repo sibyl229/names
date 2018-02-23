@@ -2,6 +2,7 @@
   (:require
    [compojure.api.exception :as ex]
    [compojure.api.sweet :as sweet]
+   [compojure.route :as route]
    [environ.core :as environ]
    [mount.core :as mount]
    [muuntaja.core :as muuntaja]
@@ -13,7 +14,10 @@
    [org.wormbase.names.user :as own-user]
    [org.wormbase.specs.auth :as auth-spec]
    [org.wormbase.names.auth.restructure] ;; Included for side effects
+   [ring.middleware.content-type :as ring-content-type]
+   [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
+   [ring.middleware.resource :as ring-resource]
    [ring.util.http-response :as http-response]
    [compojure.api.middleware :as mw]
    [muuntaja.core :as m])
@@ -52,7 +56,7 @@
     "//online.swagger.io/validator"))
 
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
-  {:ui "/"
+  {:ui "/api"
    :spec "/swagger.json"
    :ignore-missing-mappings? false
    :data
@@ -75,7 +79,7 @@
      {:name "variation"}
      {:name "user"}]}})
 
-(def ^{:doc "The main application."} app
+(def api
   (sweet/api
    {:coercion :spec
     :formats mformats
@@ -94,12 +98,29 @@
       ::ex/request-validation own-eh/handle-request-validation
       ::ex/default own-eh/handle-unexpected-error}}
     :swagger swagger-ui}
-   (sweet/context "" []
+   (sweet/context "/api" []
      ;; TODO: is it right to be
      ;; repating the authorization and auth-rules params below so that
      ;; the not-found handler doesn't raise validation error?
      own-user/routes
      own-gene/routes)))
+
+(def ^{:doc "The main application."} app
+
+  (-> (sweet/routes
+       api
+      ; (route/not-found "aaa")
+       )
+      ; (http-response/found "/index.html")
+      (ring-resource/wrap-resource "client_build")
+      (ring-content-type/wrap-content-type)
+      )
+
+  ;; (->
+  ;;     (ring-file/wrap-file "client/build")
+  ;;     (ring-file/wrap-file "client/build/static/media")
+  ;;  )
+  )
 
 (defn init
   "Entry-point for ring server initialization."

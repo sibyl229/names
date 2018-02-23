@@ -39,7 +39,7 @@
          :host "0.0.0.0"
          :init org.wormbase.names.service/init}
   :source-paths ["src"]
-  :resource-paths ["resources"]
+  :resource-paths ["resources" "client/build"]
   :target-path "target/%s"
   :main ^:skip-aot org.wormbase.names.service
   :monkeypatch-clojure-test false

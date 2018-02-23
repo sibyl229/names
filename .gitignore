@@ -5,7 +5,7 @@
 .lein-*
 .nrepl-port
 /*-init.clj
-/*.bak		
+/*.bak
 /*.old
 /*.out
 /bundle-release.log
