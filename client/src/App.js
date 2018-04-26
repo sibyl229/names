@@ -6,23 +6,13 @@ import { withStyles } from './components/elements';
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
-import {startMock, stopMock} from './mock';
+import Gene, { GeneProfile, GeneCreate } from './containers/Gene';
 import logo from './logo.svg';
 import wormbaseLogo from './logo_wormbase_solid.svg';
 import './App.css';
 
 
 class App extends Component {
-  componentDidMount() {
-    startMock();
-    fetch('/aaaa').then(function(data) {
-      console.log('got data', data);
-    });
-  }
-
-  componentWillUnmount() {
-    stopMock();
-  }
 
   render() {
     return (
@@ -33,32 +23,25 @@ class App extends Component {
               <Header>
                 <ProfileButton name={user.name}/>
               </Header>
-              <div className={this.props.classes.content}>
               {
                 isAuthenticated ? [
                   <NavBar />,
-                  <Route exact path="/" component={() => <Redirect to="/gene" /> } />,
-                  <Route path="/gene" component={({match}) => ([
-                    <Route path="/" exact={false} strict={false} component={() => (
-                      <ul>
-                        <li><Link to="/">Home</Link></li>
-                        <li><Link to="/gene/new">Create a new gene</Link></li>
-                        <li><Link to="/gene/id/WB1">Edit an exiting gene (example)</Link></li>
-                        <li><Link to="/gene/merge">Merge two genes</Link></li>
-                        <li><Link to="/gene/split">Split a gene</Link></li>
-                      </ul>
-                    )} />,
-                    <Route path={`${match.url}/new`} component={() => 'form to create new gene'} />,
-                    <Route path={`${match.url}/id/:id`} component={() => 'form edit an existing new gene'} />,
-                    <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
-                    <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
-                  ])} />,
-                  <Route path="/variation" component={() => 'variation page' } />,
-                  <Route path="/me" component={() => profile } />,
+                  <div className={this.props.classes.content}>
+                    <Route exact path="/" component={() => <Redirect to="/gene" /> } />
+                    <Route exact path="/gene" component={() => <Gene />} />
+                    <Route path="/gene" component={({match}) => ([
+                      <Route path={`${match.url}/new`} component={() => <GeneCreate />} />,
+                      <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />,
+                      <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
+                      <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
+                    ])} />
+                    <Route path="/variation" component={() => 'Variation page (coming soon ..ish)' } />
+                    <Route path="/feature" component={() => 'Feature page (coming soon ..ish)' } />
+                    <Route path="/me" component={() => profile } />
+                  </div>
                 ] :
                 login
               }
-              </div>
               <Footer />
             </div>
           )
@@ -82,6 +65,7 @@ const styles = (theme) => ({
     flex: '1 0 auto',
     display: 'flex',
     flexDirection: 'column',
+    padding: theme.spacing.unit * 4,
   }
 });
 
