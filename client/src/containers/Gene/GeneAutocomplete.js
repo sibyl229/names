@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Link, withRouter } from 'react-router-dom';
 import SearchIcon from '@material-ui/icons/Search';
 import {
   withStyles,
   Button,
+  Chip,
   Icon,
   InputAdornment,
   Paper,
@@ -14,24 +14,37 @@ import {
 import GeneAutocompleteBase from './GeneAutocompleteBase';
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, ...other } = inputProps;
+  const { InputProps, classes, ref, item, reset, ...other } = inputProps;
+  console.log(inputProps);
   return (
-    <TextField
-      InputProps={{
-        ...InputProps,
-        inputRef: ref,
-        classes: {
-          root: classes.inputRoot,
-        },
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
-      }}
-      {...other}
-    />
-  );
+      <TextField
+        InputProps={{
+          ...InputProps,
+          value: item ? '' : InputProps.value,
+          disabled: item,
+          inputRef: ref,
+          classes: {
+            root: classes.inputRoot,
+          },
+          startAdornment: (
+            <InputAdornment position="start">
+              {
+                item ?
+                  <Chip
+                    tabIndex={-1}
+                    label={`${item.label} [ID: ${item.id}]`}
+                    className={classes.chip}
+                    onDelete={reset}
+                  /> :
+                  null
+              }
+
+            </InputAdornment>
+          ),
+        }}
+        {...other}
+      />
+    )
 }
 
 function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
@@ -43,7 +56,7 @@ function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, sele
       {...itemProps}
       key={suggestion.label}
       selected={isHighlighted}
-      component={({...props}) => <Link to={`/gene/id/${suggestion.id}`} {...props} />}
+      component={'div'}
       style={{
         fontWeight: isSelected ? 500 : 400,
       }}
@@ -63,47 +76,23 @@ renderSuggestion.propTypes = {
   }).isRequired,
 };
 
-class GeneSearchBox extends Component {
+class GeneAutocomplete extends Component {
   render() {
-    const {classes, history, onChange, value, ...otherProps} = this.props;
+    const {classes, onChange, value, ...otherProps} = this.props;
     return (
       <GeneAutocompleteBase onChange={onChange} value={value}>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions}) => (
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, reset}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
               classes,
               InputProps: getInputProps({
-                placeholder: 'Search a gene...',
-                id: 'gene-search-box',
-                onKeyDown: event => {
-                  if (event.key === 'Enter') {
-
-                    let id;
-
-                    if (highlightedIndex || highlightedIndex === 0) {
-                      const highlightedSuggestion = suggestions[highlightedIndex];
-                      if (highlightedSuggestion) {
-                        id = highlightedSuggestion.id;
-                      }
-                    }
-
-                    if (!id) {
-                      const [nextSelectedItem] = suggestions.filter(
-                        (item) => item.id === inputValue || item.label === inputValue
-                      );
-                      id = nextSelectedItem && nextSelectedItem.id;
-                    }
-
-                    if (!id) {
-                      id = inputValue;
-                    }
-
-                    history.push(`/gene/id/${id}`);
-
-                  }
-                },
+                id: 'gene-id',
               }),
+              item: selectedItem ? suggestions.filter(
+                (item) => item.id === selectedItem,
+              )[0] : null,
+              reset,
               ...otherProps,
             })}
             {isOpen ? (
@@ -126,13 +115,10 @@ class GeneSearchBox extends Component {
   }
 }
 
-GeneSearchBox.propTypes = {
+GeneAutocomplete.propTypes = {
   classes: PropTypes.object.isRequired,
   value: PropTypes.string,
   onChange: PropTypes.func,
-  history: PropTypes.shape({
-    push: PropTypes.func.isRequired,
-  }).isRequired,
 }
 
 const styles = (theme) => ({
@@ -143,10 +129,10 @@ const styles = (theme) => ({
   paper: {
     position: 'absolute',
     zIndex: 1,
-    marginTop: -1 * theme.spacing.unit,
+    marginTop: -4 * theme.spacing.unit,
     left: 0,
     right: 0,
   },
 });
 
-export default withRouter(withStyles(styles)(GeneSearchBox));
+export default withStyles(styles)(GeneAutocomplete);
